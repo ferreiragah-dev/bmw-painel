@@ -68,7 +68,7 @@ class CockpitTest {
         app.onNodeWithText("Turbo").assertIsDisplayed()
         app.onNodeWithText("IAT").assertIsDisplayed()
         snap("20-800x480")
-        setSize(1920,720);snap("21-ultrawide");setSize(1280,720)
+        setSize(1280,480);snap("21-ultrawide");setSize(1280,640)
         click("choose_layout");click("pick_RACE")
         app.waitUntil(5000){runBlocking{Prefs(app.activity).get()}.layout==Layout.RACE}
     }
