@@ -29,6 +29,11 @@ class CockpitTest {
         app.waitUntil(12000){val m=app.activity.resources.displayMetrics;(m.heightPixels>m.widthPixels)==portrait}
         app.waitUntil(12000){app.onAllNodesWithTag("tab_dash").fetchSemanticsNodes().isNotEmpty()}
     }
+    private fun setSize(width:Int,height:Int) {
+        val ui = InstrumentationRegistry.getInstrumentation().uiAutomation
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(ui.executeShellCommand("wm size ${height}x${width}")).use{it.readBytes()}
+        app.waitUntil(12000){app.activity.resources.displayMetrics.widthPixels==width}
+    }
     @Test fun exercise(){
         app.waitUntil(10000){vm.ready.value && vm.frame.value.time>0}
         orientation(false)
@@ -44,7 +49,9 @@ class CockpitTest {
         click("tab_telemetry");snap("03-telemetry");tap("Pausar");tap("Retomar");tap("Gravar sessão")
         app.runOnIdle{vm.playing.value=true};app.waitUntil(5000){vm.frame.value.time>0};SystemClock.sleep(1100)
         tap("Finalizar sessão");tap("Sessões");app.waitUntil(6000){vm.files.value.any{it.count>0}};snap("12-sessions")
-        tap("0–100 km/h");snap("07-performance");tap("Iniciar");tap("Partir do zero")
+        tap("0–100 km/h");app.runOnIdle{vm.speedFactor.value=3f};tap("Iniciar");tap("Partir do zero")
+        app.waitUntil(15000){vm.timing.value.results.isNotEmpty()};snap("07-performance")
+        app.runOnIdle{vm.speedFactor.value=1f}
         tap("Diagnóstico");tap("Ler códigos");app.waitUntil(3000){vm.logs.value.any{it.demo}};snap("06-diagnostics")
         click("tab_editor");snap("05-editor");click("add_RPM")
         app.onNodeWithTag("widget_2").performTouchInput{swipe(center,center+androidx.compose.ui.geometry.Offset(58f,-25f),250)}
@@ -56,7 +63,14 @@ class CockpitTest {
         click("choose_layout");snap("14-portrait-layouts");click("pick_RACE");snap("15-portrait-race")
         click("tab_telemetry");snap("16-portrait-telemetry");click("tab_editor");snap("17-portrait-editor")
         tap("Temas e skins");snap("18-portrait-themes");click("tab_settings");snap("19-portrait-settings")
-        app.waitUntil(5000){runBlocking{Prefs(app.activity).get()}.skin==Skin.AMBER}
+        orientation(false);click("tab_dash");click("choose_layout");click("pick_M")
+        setSize(800,480)
+        app.onNodeWithText("Turbo").assertIsDisplayed()
+        app.onNodeWithText("IAT").assertIsDisplayed()
+        snap("20-800x480")
+        setSize(1920,720);snap("21-ultrawide");setSize(1280,720)
+        click("choose_layout");click("pick_RACE")
+        app.waitUntil(5000){runBlocking{Prefs(app.activity).get()}.layout==Layout.RACE}
     }
 }
 class RestartCheck{
@@ -64,8 +78,13 @@ class RestartCheck{
     @Test fun persisted(){
         app.waitUntil(10000){app.activity.vm.ready.value}
         val o=app.activity.vm.options.value
-        assertEquals(Skin.AMBER,o.skin);assertEquals(Layout.RACE,o.layout);assertEquals(2,o.widgets.size)
+        assertEquals(Skin.AMBER,o.skin);assertEquals(Layout.RACE,o.layout);assertEquals(2,o.widgets.size);assertEquals(2,o.saved.getValue("Meu painel").size)
         assertTrue(o.widgets.any{it.sensor==Sensor.RPM && it.x!=.23f})
-        assertTrue(app.activity.vm.files.value.isNotEmpty() || runBlocking{Sessions(app.activity).list()}.isNotEmpty())
+        val sessions=Sessions(app.activity)
+        val session=sessions.list().first()
+        val csv=java.io.ByteArrayOutputStream().also{sessions.export(session.file,it)}.toString("UTF-8").lines()
+        assertTrue(csv.first().contains("SPEED_km/h;SPEED_source"))
+        assertTrue(csv[1].contains(";DEMO;"))
+        assertEquals(csv.first().count{it==';'},csv[1].count{it==';'})
     }
 }

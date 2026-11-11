@@ -23,6 +23,30 @@ class ObdTest {
         assertTrue(Obd.parseDtcs(listOf(67,0)).isEmpty())
     }
     @Test(expected=java.io.IOException::class) fun truncatedIsNotClear(){Obd.parseDtcs(listOf(67,1))}
+    @Test fun negotiatedReaderOnlyRequestsAdvertisedPids() = kotlinx.coroutines.runBlocking {
+        val observed=mutableListOf<String>()
+        val ecu=Ecu(object:Link{
+            override fun close(){}
+            override suspend fun exchange(command:String):String{
+                observed+=command
+                return when(command){
+                    "ATZ"->"ELM327"
+                    "0100"->"7E8 06 41 00 00 18 00 00"
+                    "010C"->"7E8 04 41 0C 41 A0"
+                    "010D"->"7E8 03 41 0D 70"
+                    "03"->"7E8 04 43 01 03 02"
+                    else->{require(command in listOf("ATE0","ATL0","ATS1","ATH1","ATSP0"));"OK"}
+                }
+            }
+        })
+        ecu.initialize()
+        val data=ecu.poll()
+        assertEquals(112.0,data[Sensor.SPEED].value!!,0.0)
+        assertEquals(Source.LIVE,data[Sensor.RPM].source)
+        assertEquals(Source.MISSING,data[Sensor.OIL].source)
+        assertEquals(listOf("P0302"),ecu.dtcs())
+        assertEquals(listOf("0100","010C","010D","03"),observed.filterNot{it.startsWith("AT")})
+    }
     @Test fun demoMoves(){val a=demoFrame(0.0,1);val b=demoFrame(4.0,2);assertNotEquals(a[Sensor.SPEED],b[Sensor.SPEED])
         assertTrue(a.values.values.all{it.source==Source.DEMO});assertNotNull(a.gear)}
 }

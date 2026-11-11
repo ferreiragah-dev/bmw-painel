@@ -17,6 +17,7 @@ class CockpitVM(app:Application):AndroidViewModel(app){
     private val saves=Channel<Options>(Channel.CONFLATED)
     val options=MutableStateFlow(Options())
     val frame=MutableStateFlow(Frame())
+    val tripKm=MutableStateFlow(0.0)
     val history=MutableStateFlow<List<Frame>>(emptyList())
     val ready=MutableStateFlow(false)
     val playing=MutableStateFlow(true)
@@ -59,7 +60,7 @@ class CockpitVM(app:Application):AndroidViewModel(app){
         if(!on){scan?.cancel();stopRecording();cancelTiming()}
         restart()
     }
-    private fun clearFeed(){frame.value=Frame();history.value=emptyList();prior=null;lastSample=0;cancelTiming();readRequested=false}
+    private fun clearFeed(){tripKm.value=0.0;frame.value=Frame();history.value=emptyList();prior=null;lastSample=0;cancelTiming();readRequested=false}
     fun mode(demo:Boolean){
         if(options.value.demo==demo)return
         stopRecording();target=null;clearFeed();options{it.copy(demo=demo)};restart()
@@ -122,6 +123,10 @@ class CockpitVM(app:Application):AndroidViewModel(app){
         }
     }
     private fun publish(f:Frame){
+        val previous=frame.value
+        val dt=f.time-previous.time
+        val a=previous[Sensor.SPEED].value;val b=f[Sensor.SPEED].value
+        if(dt in 1..3500 && a!=null && b!=null)tripKm.value+=(a+b)*.5*dt/3600000
         frame.value=f;updateTiming(f)
         if(f.time-lastSample>=450){lastSample=f.time;history.update{(it+f).takeLast(600)}
             if(recording.value){val demo=options.value.demo;disk.trySend{sessions.append(f,demo)}}}
@@ -137,7 +142,7 @@ class CockpitVM(app:Application):AndroidViewModel(app){
         out.use{sessions.export(file,it)};notice.value="CSV exportado"
     }}
     fun diagnose(){
-        if(options.value.demo)addLog(emptyList(),true)
+        if(options.value.demo)addLog(listOf("P0302","P0171"),true)
         else if(connected.value){readRequested=true;notice.value="Consultando a ECU…"}else notice.value="Conecte o veículo para ler códigos"
     }
     private fun addLog(codes:List<String>,demo:Boolean){

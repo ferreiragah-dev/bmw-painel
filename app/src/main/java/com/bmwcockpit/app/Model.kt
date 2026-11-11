@@ -30,8 +30,8 @@ fun demoFrame(t: Double, stamp: Long): Frame {
     val rpm=1800+(speed%38)*76+wave*580
     val torque=155+wave*225
     val v=mapOf(Sensor.SPEED to speed,Sensor.RPM to rpm,Sensor.BOOST to (.36+wave*1.62),
-        Sensor.OIL to (110+5*sin(t/17)),Sensor.WATER to (94+3*sin(t/13)),
-        Sensor.OIL_P to (2.7+rpm/2100),Sensor.IAT to (38+8*sin(t/15)),
+        Sensor.OIL to (110+5*sin(t/17)+2.1*sin(t/3.3)+.45*sin(t*2.7)),Sensor.WATER to (94+3*sin(t/13)+1.3*cos(t/4.1)+.25*sin(t*1.8)),
+        Sensor.OIL_P to (2.7+rpm/2100),Sensor.IAT to (38+6*sin(t/15)+1.2*sin(t/2.4)),
         Sensor.VOLTS to (14.15+.14*cos(t/9)), Sensor.LOAD to (32+wave*62),
         Sensor.THROTTLE to (20+wave*75),Sensor.TORQUE to torque,Sensor.POWER to torque*rpm/7023.5)
     return Frame(stamp,v.mapValues { Reading(it.value,Source.DEMO) },gear)
@@ -43,7 +43,8 @@ data class Widget(val id:Int,val sensor:Sensor,val x:Float=.5f,val y:Float=.5f,v
 fun defaultWidgets()=listOf(Widget(1,Sensor.SPEED))
 data class Options(val skin:Skin=Skin.M,val layout:Layout=Layout.M,val strip:List<Sensor> = baseStrip,
     val widgets:List<Widget> = defaultWidgets(),val overlay:Boolean=false,val reconnect:Boolean=true,
-    val address:String="",val ble:Boolean=false,val demo:Boolean=true,val accent:Int=0)
+    val address:String="",val ble:Boolean=false,val demo:Boolean=true,val accent:Int=0,
+    val designName:String="Meu painel",val saved:Map<String,List<Widget>> = emptyMap())
 data class Session(val file:String,val start:Long,val count:Int)
 data class DtcLog(val whenRead:Long,val demo:Boolean,val codes:List<String>)
 val dtcNames=mapOf("P0300" to "Falhas de combustão em múltiplos cilindros","P0302" to "Falha de combustão no cilindro 2",

@@ -17,13 +17,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable fun Dashboard(vm:CockpitVM,go:(String)->Unit){
     val o by vm.options.collectAsStateWithLifecycle();val f by vm.frame.collectAsStateWithLifecycle()
-    val hist by vm.history.collectAsStateWithLifecycle()
+    val hist by vm.history.collectAsStateWithLifecycle();val trip by vm.tripKm.collectAsStateWithLifecycle()
     var sensor by remember{mutableStateOf<Sensor?>(null)};var sim by remember{mutableStateOf(false)}
     Column(Modifier.fillMaxSize().testTag("screen_dash").padding(horizontal=if(Portrait.current)9.dp else 16.dp,vertical=5.dp)){
         Box(Modifier.fillMaxWidth().height(36.dp)){
             Row(Modifier.align(Alignment.Center).clickable{go("layouts")},verticalAlignment=Alignment.CenterVertically){
                 if(o.layout==Layout.M)MMark(Modifier.size(37.dp,20.dp)) else Icon(if(o.layout==Layout.RACE)Icons.Outlined.SportsScore else Icons.Outlined.Speed,null,Modifier.size(23.dp),LocalPalette.current.accent)
-                Txt(if(o.layout==Layout.M)"Performance" else o.layout.title,21,white,true,true)
+                Txt(if(o.overlay)o.designName else if(o.layout==Layout.M)"Performance" else o.layout.title,21,white,true,true)
             }
             IconButton(onClick={go("layouts")},modifier=Modifier.align(Alignment.CenterStart).testTag("choose_layout").size(35.dp)){Icon(Icons.Outlined.Dashboard,"Escolher painel",tint=muted)}
             if(o.demo)IconButton(onClick={sim=true},modifier=Modifier.align(Alignment.CenterEnd).size(35.dp)){Icon(Icons.Outlined.Tune,"Controlar simulação",tint=muted)}
@@ -44,7 +44,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
             };Spacer(Modifier.height(4.dp))}
         }
         Row(Modifier.fillMaxWidth().height(25.dp),verticalAlignment=Alignment.CenterVertically,horizontalArrangement=Arrangement.SpaceBetween){
-            Txt("F30  ·  320i ActiveFlex",11,muted,true,true);MMark(Modifier.size(31.dp,16.dp));Txt(if(o.demo)"SPORT+  ·  DEMO" else "OBD2  ·  CAN",11,if(o.demo)red else muted,true,true)
+            Txt("Trip   %.1f km".format(trip),11,muted,true,true)
+            MMark(Modifier.size(31.dp,16.dp))
+            Txt("Potência est.   "+Sensor.POWER.format(f[Sensor.POWER].value)+" cv",11,muted,true,true)
+            Txt("Torque est.   "+Sensor.TORQUE.format(f[Sensor.TORQUE].value)+" Nm",11,muted,true,true)
         }
     }
     sensor?.let{s->AlertDialog(onDismissRequest={sensor=null},title={Text(s.title)},text={Column{
@@ -55,8 +58,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 }
 @Composable fun Performance(f:Frame){
     val car:@Composable ()->Unit={Column(horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
-        F30(Modifier.fillMaxWidth().weight(1f,false));Txt("F30  320i",13,muted,true,true)
-        Txt(f.gear?.let{"D"+it}?:"—",32,white,true,true);Txt(if(f.gear!=null)"SPORT+  ·  DEMO" else "MARCHA",12,red,true,true)
+        F30(Modifier.fillMaxWidth().aspectRatio(220f/116f));Txt("F30  320i",13,muted,true,true)
+        Box(Modifier.fillMaxWidth().height(57.dp),contentAlignment=Alignment.Center){
+            Canvas(Modifier.matchParentSize()){
+                val w=size.width;val h=size.height
+                for(i in 0..1){
+                    fun x(v:Float)=if(i==0)v*w else (1-v)*w
+                    val shape=Path().apply{moveTo(x(.04f),h*.72f);lineTo(x(.21f),h*.19f);lineTo(x(.36f),h*.19f)}
+                    drawPath(shape,Brush.horizontalGradient(listOf(red,Color(0xff4f1720),red)),style=Stroke(2.dp.toPx()))
+                    drawLine(blue.copy(alpha=.52f),Offset(x(.06f),h*.81f),Offset(x(.33f),h*.81f),1.dp.toPx())
+                }
+            }
+            Column(horizontalAlignment=Alignment.CenterHorizontally){
+                Txt(f.gear?.let{"D"+it}?:"—",28,white,true,true)
+                Txt(if(f.gear==null)"MARCHA" else if((f[Sensor.THROTTLE].value?:0.0)>55)"SPORT+ · DEMO" else "SPORT · DEMO",10,red,true,true)
+            }
+        }
     }}
     if(Portrait.current)Column(Modifier.fillMaxSize(),horizontalAlignment=Alignment.CenterHorizontally){
         Row(Modifier.fillMaxWidth().weight(1f)){Gauge(Sensor.SPEED,f,Modifier.weight(1f).fillMaxHeight());Gauge(Sensor.RPM,f,Modifier.weight(1f).fillMaxHeight())}
@@ -109,20 +126,28 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
     Txt(Sensor.RPM.format(f[Sensor.RPM].value)+" RPM",17,muted,true)
 }}
 @Composable fun Preview(layout:Layout,mod:Modifier,skin:Skin?=null){
-    val c=skin?.let{palette(it).accent}?:LocalPalette.current.accent
-    Canvas(mod){
-        val w=size.width;val h=size.height
-        fun dial(x:Float,y:Float,r:Float,angle:Float){
-            drawArc(muted,137f,266f,false,Offset(x-r,y-r),Size(2*r,2*r),style=Stroke(r*.065f))
-            drawArc(c,329f,68f,false,Offset(x-r*.89f,y-r*.89f),Size(1.78f*r,1.78f*r),style=Stroke(r*.115f))
-            for(i in 0..10){val a=(137+i*26.6)*Math.PI/180;drawLine(white,Offset(x+(kotlin.math.cos(a)*r*.83).toFloat(),y+(kotlin.math.sin(a)*r*.83).toFloat()),Offset(x+(kotlin.math.cos(a)*r*.95).toFloat(),y+(kotlin.math.sin(a)*r*.95).toFloat()),1.3f)}
-            val a=angle*Math.PI/180;drawLine(red,Offset(x,y),Offset(x+(kotlin.math.cos(a)*r*.82).toFloat(),y+(kotlin.math.sin(a)*r*.82).toFloat()),2f)
-        }
-        val r=minOf(h*.43f,w*.22f)
-        when(layout){Layout.M,Layout.GT->{dial(w*.26f,h*.53f,r,227f);dial(w*.74f,h*.53f,r,290f)
-            if(layout==Layout.GT)drawLine(c,Offset(w*.17f,h*.96f),Offset(w*.84f,h*.92f),2f)}
-            Layout.RACE->dial(w*.5f,h*.53f,minOf(h*.46f,w*.37f),290f)
-            Layout.MIN->{val paint=android.graphics.Paint(1).apply{color=white.toArgb();textSize=h*.58f;textAlign=android.graphics.Paint.Align.CENTER;typeface=android.graphics.Typeface.DEFAULT_BOLD};drawContext.canvas.nativeCanvas.drawText("112",w/2,h*.69f,paint)}
+    val current=LocalPalette.current
+    val colors=skin?.let{palette(it)}?:current
+    val sample=remember{demoFrame(.1,1)}
+    CompositionLocalProvider(LocalPalette provides colors){
+        Column(mod.background(Brush.verticalGradient(listOf(Color(0xff0d1825),ink))).padding(3.dp)){
+            when(layout){
+                Layout.M,Layout.GT->Row(Modifier.fillMaxWidth().weight(1f),verticalAlignment=Alignment.CenterVertically){
+                    Gauge(Sensor.SPEED,sample,Modifier.weight(1f).fillMaxHeight())
+                    if(layout==Layout.M)F30(Modifier.weight(.46f).aspectRatio(1.9f))
+                    Gauge(Sensor.RPM,sample,Modifier.weight(1f).fillMaxHeight())
+                }
+                Layout.RACE->Row(Modifier.fillMaxWidth().weight(1f),verticalAlignment=Alignment.CenterVertically){
+                    @Composable fun Stack(m:Modifier){Column(m,verticalArrangement=Arrangement.spacedBy(3.dp)){repeat(4){Spacer(Modifier.fillMaxWidth().weight(1f).background(colors.needle.copy(alpha=.26f)))}}}
+                    Stack(Modifier.weight(.45f).fillMaxHeight(.63f))
+                    Gauge(Sensor.RPM,sample,Modifier.weight(1f).fillMaxHeight(),race=true)
+                    Stack(Modifier.weight(.45f).fillMaxHeight(.63f))
+                }
+                Layout.MIN->Box(Modifier.fillMaxWidth().weight(1f),contentAlignment=Alignment.Center){Txt("112",33,colors.digits,true,true)}
+            }
+            if(layout==Layout.M || layout==Layout.GT)Row(horizontalArrangement=Arrangement.spacedBy(2.dp)){
+                baseStrip.forEach{Spacer(Modifier.weight(1f).height(2.dp).background(sensorColor(it).copy(alpha=.7f)))}
+            }
         }
     }
 }

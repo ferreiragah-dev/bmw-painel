@@ -51,6 +51,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
     val o by vm.options.collectAsStateWithLifecycle();val frame by vm.frame.collectAsStateWithLifecycle()
     var items by remember{mutableStateOf(o.widgets)};var selected by remember{mutableStateOf(items.firstOrNull()?.id)}
     var sensorMenu by remember{mutableStateOf(false)};val sel=items.find{it.id==selected}
+    var libraryOpen by remember{mutableStateOf(false)}
+    var draftName by remember{mutableStateOf(o.designName)}
+    var inputName by remember{mutableStateOf("")}
+    fun applyLayout(name:String){
+        if(name.isBlank() || items.isEmpty()){vm.notice.value="Escolha um nome e adicione um instrumento.";return}
+        if(name !in o.saved && o.saved.size>=16){vm.notice.value="Limite de 16 layouts salvos.";return}
+        vm.options{it.copy(widgets=items,overlay=true,designName=name,saved=it.saved+(name to items))}
+        libraryOpen=false;go("dash")
+    }
     fun mutate(f:(Widget)->Widget){items=items.map{if(it.id==selected)f(it) else it}}
     fun add(s:Sensor){
         if(items.size>=12){vm.notice.value="Limite de 12 instrumentos";return}
@@ -92,11 +101,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
             Box(Modifier.width(150.dp)){library()};field(Modifier.weight(1f).fillMaxHeight().border(1.dp,edge));Box(Modifier.width(184.dp)){props()}
         }
         Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(7.dp,Alignment.CenterHorizontally)){
+            Action("Layouts"){inputName=draftName;libraryOpen=true}
             Action("Restaurar"){items=defaultWidgets();selected=1}
             Action("Cancelar"){go("dash")}
-            Action("Salvar",true,Icons.Outlined.Save,Modifier.testTag("save_layout")){vm.options{it.copy(widgets=items,overlay=items.isNotEmpty())};go("dash")}
+            Action("Salvar",true,Icons.Outlined.Save,Modifier.testTag("save_layout")){applyLayout(draftName)}
         }
     }
+    if(libraryOpen)AlertDialog(onDismissRequest={libraryOpen=false},title={Text("Meus layouts")},text={
+        Column(Modifier.verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(6.dp)){
+            OutlinedTextField(inputName,{inputName=it.take(40)},label={Text("Nome do layout")},singleLine=true)
+            o.saved.forEach{(name,widgets)->Action(name,mod=Modifier.fillMaxWidth()){
+                items=widgets;selected=widgets.firstOrNull()?.id;draftName=name;libraryOpen=false
+            }}
+        }
+    },confirmButton={TextButtonLocal("Salvar com este nome"){applyLayout(inputName.trim())}},dismissButton={TextButtonLocal("Fechar"){libraryOpen=false}})
+
 }
 @Composable fun Themes(vm:CockpitVM,go:(String)->Unit){
     val o by vm.options.collectAsStateWithLifecycle()

@@ -19,21 +19,30 @@ class Prefs(private val context:Context){
         return runCatching{
             val j=JSONObject(s)
             val strip=j.optJSONArray("strip")?.let{a->(0 until a.length()).mapNotNull{i->selectable.find{it.name==a.optString(i)}}.distinct().take(6)}.orEmpty()
-            val widgets=j.optJSONArray("widgets")?.let{a->(0 until minOf(a.length(),12)).mapNotNull{i->
+            val widgets=j.optJSONArray("widgets")?.let(::decodeWidgets)?:defaultWidgets()
+            val named=j.optJSONObject("saved")?:JSONObject()
+            val saved=named.keys().asSequence().take(16).mapNotNull{k->named.optJSONArray(k)?.let{k to decodeWidgets(it)}}.toMap()
+            Options(enumOr(j.optString("skin"),Skin.M),enumOr(j.optString("layout"),Layout.M),strip.ifEmpty{baseStrip},widgets,
+                j.optBoolean("overlay"),j.optBoolean("reconnect",true),j.optString("address"),j.optBoolean("ble"),j.optBoolean("demo",true),j.optInt("accent").coerceIn(0,6),j.optString("name","Meu painel"),saved)
+        }.getOrDefault(Options())
+    }
+
+    private fun decodeWidgets(a:JSONArray):List<Widget> = (0 until minOf(a.length(),12)).mapNotNull{i->
                 a.optJSONObject(i)?.let{ w->Widget(w.optInt("id",i),enumOr(w.optString("sensor"),Sensor.SPEED),
                     w.optDouble("x",.5).toFloat().coerceIn(0f,1f),w.optDouble("y",.5).toFloat().coerceIn(0f,1f),
                     w.optDouble("size",.47).toFloat().coerceIn(.21f,.82f),w.optInt("color").coerceIn(0,5),enumOr(w.optString("style"),Style.DIAL)) }
-            }.distinctBy{it.id}}?:defaultWidgets()
-            Options(enumOr(j.optString("skin"),Skin.M),enumOr(j.optString("layout"),Layout.M),strip.ifEmpty{baseStrip},widgets,
-                j.optBoolean("overlay"),j.optBoolean("reconnect",true),j.optString("address"),j.optBoolean("ble"),j.optBoolean("demo",true),j.optInt("accent").coerceIn(0,6))
-        }.getOrDefault(Options())
+            }.distinctBy{it.id}
+    private fun encodeWidgets(items:List<Widget>):JSONArray{
+        val widgets=JSONArray()
+        for(w in items)widgets.put(JSONObject().put("id",w.id).put("sensor",w.sensor.name).put("x",w.x.toDouble()).put("y",w.y.toDouble())
+            .put("size",w.size.toDouble()).put("color",w.color).put("style",w.style.name))
+        return widgets
     }
     suspend fun save(o:Options){
-        val widgets=JSONArray()
-        for(w in o.widgets)widgets.put(JSONObject().put("id",w.id).put("sensor",w.sensor.name).put("x",w.x.toDouble()).put("y",w.y.toDouble())
-            .put("size",w.size.toDouble()).put("color",w.color).put("style",w.style.name))
-        val json=JSONObject().put("skin",o.skin.name).put("layout",o.layout.name).put("strip",JSONArray(o.strip.map{it.name}))
-            .put("widgets",widgets).put("overlay",o.overlay).put("reconnect",o.reconnect).put("address",o.address)
+        val saved=JSONObject()
+        o.saved.forEach{(name,items)->saved.put(name,encodeWidgets(items))}
+        val json=JSONObject().put("saved",saved).put("name",o.designName).put("skin",o.skin.name).put("layout",o.layout.name).put("strip",JSONArray(o.strip.map{it.name}))
+            .put("widgets",encodeWidgets(o.widgets)).put("overlay",o.overlay).put("reconnect",o.reconnect).put("address",o.address)
             .put("ble",o.ble).put("demo",o.demo).put("accent",o.accent)
         context.store.edit{it[key]=json.toString()}
     }

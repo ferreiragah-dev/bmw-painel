@@ -38,6 +38,13 @@ val Portrait=staticCompositionLocalOf{false}
     val nav=rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val route=entry?.destination?.route?:"dash"
+    val activity=LocalContext.current as? android.app.Activity
+    var lastBack by remember(route){mutableLongStateOf(0L)}
+    androidx.activity.compose.BackHandler(enabled=route=="dash" && activity!=null){
+        val now=android.os.SystemClock.elapsedRealtime()
+        if(lastBack>0 && now-lastBack<2000)activity?.finish()
+        else { lastBack=now;android.widget.Toast.makeText(activity,"Pressione Voltar novamente para sair",android.widget.Toast.LENGTH_SHORT).show() }
+    }
     val go:(String)->Unit={if(it!=route)nav.navigate(it){launchSingleTop=true;popUpTo("dash"){inclusive=false}}}
     val notice by vm.notice.collectAsStateWithLifecycle()
     val ready by vm.ready.collectAsStateWithLifecycle()

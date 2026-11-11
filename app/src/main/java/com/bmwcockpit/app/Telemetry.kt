@@ -136,7 +136,14 @@ private val sections=listOf("Gráficos","Sessões","0–100 km/h","1/4 de milha"
             Action("Ler códigos",icon=Icons.Outlined.Search){vm.diagnose()}
         }
         Txt(if(last==null)"Aguardando leitura" else if(last.codes.isEmpty())"Nenhum código armazenado na última leitura" else "Códigos encontrados (${last.codes.size})",16,LocalPalette.current.digits,true)
-        last?.codes?.forEach{Txt(it+"  ·  "+(dtcNames[it]?:"Descrição indisponível"),15)}
+        last?.codes?.forEach{code->
+            Row(Modifier.fillMaxWidth().plate().padding(10.dp),verticalAlignment=Alignment.CenterVertically){
+                Icon(Icons.Outlined.WarningAmber,null,Modifier.size(20.dp),Color(0xffffbb38))
+                Spacer(Modifier.width(8.dp))
+                Column(Modifier.weight(1f)){Txt(code+"  ·  "+(dtcNames[code]?:"Descrição indisponível"),14,white,true);Txt(if(last.demo)"Exemplo do simulador" else "Lido da ECU",11,muted)}
+                Txt(clock(last.whenRead),12,muted)
+            }
+        }
         Divider(color=edge);Txt("Histórico de leituras",16,white,true)
         logs.filter{it.demo==o.demo}.forEach{item->Txt(stamp(item.whenRead)+"   ·   "+(if(item.demo)"Simulação" else "ECU")+"   ·   "+(item.codes.joinToString().ifBlank{"0 códigos"}),13,muted)}
     }
@@ -146,11 +153,26 @@ private val sections=listOf("Gráficos","Sessões","0–100 km/h","1/4 de milha"
     val seconds=if(time.kind==kind || time.results.firstOrNull()?.first==kind)time.seconds else null
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()),verticalArrangement=Arrangement.spacedBy(9.dp)){
         Txt("Medições de performance",20,white,true)
-        Column(Modifier.fillMaxWidth().plate().padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally){
-            Txt(kind,16,muted,true,true);Txt(seconds?.let{"%.2f s".format(it)}?:"— s",44,white,true,true);Txt(time.status,13,muted)
-            Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){Action(if(kind=="Voltas" && time.kind==kind)"Marcar volta" else "Iniciar",true){vm.arm(kind)}
-                Action("Reiniciar"){vm.cancelTiming()};if(opt.demo)Action("Partir do zero"){vm.demoRest()}}
+        val reading:@Composable (Modifier)->Unit={m->
+            Column(m.plate().padding(12.dp),horizontalAlignment=Alignment.CenterHorizontally,verticalArrangement=Arrangement.Center){
+                Txt(kind,16,muted,true,true);Txt(seconds?.let{"%.2f s".format(it)}?:"— s",45,white,true,true);Txt(time.status,13,muted)
+                Spacer(Modifier.height(7.dp))
+                Row(horizontalArrangement=Arrangement.spacedBy(6.dp)){
+                    Action(if(kind=="Voltas" && time.kind==kind)"Marcar volta" else "Iniciar",true){vm.arm(kind)}
+                    Action("Reiniciar"){vm.cancelTiming()}
+                }
+                if(opt.demo)TextButtonLocal("Partir do zero"){vm.demoRest()}
+            }
         }
-        Txt("Últimas medições",15,white,true);time.results.filter{it.first==kind}.forEach{Txt(it.first+"     %.2f s".format(it.second),15)}
+        val recent:@Composable (Modifier)->Unit={m->Column(m.plate().padding(14.dp),verticalArrangement=Arrangement.spacedBy(8.dp)){
+            Txt("Últimas medições",16,white,true)
+            val results=time.results.filter{it.first==kind}
+            if(results.isEmpty())Txt("Aguardando medição",13,muted)
+            results.forEach{Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween){Txt("%.2f s".format(it.second),18,white,true,true);Txt(kind,12,muted)};Divider(color=edge)}
+        }}
+        if(Portrait.current){reading(Modifier.fillMaxWidth());recent(Modifier.fillMaxWidth())}
+        else Row(Modifier.fillMaxWidth().heightIn(min=215.dp),horizontalArrangement=Arrangement.spacedBy(9.dp)){
+            reading(Modifier.weight(1.08f));recent(Modifier.weight(1f))
+        }
     }
 }
