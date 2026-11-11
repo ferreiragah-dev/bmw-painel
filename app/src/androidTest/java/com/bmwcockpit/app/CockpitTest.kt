@@ -18,7 +18,13 @@ class CockpitTest {
     private fun click(tag:String){app.onNodeWithTag(tag).performClick();app.waitForIdle()}
     private fun tap(s:String){app.onNodeWithText(s).performClick();app.waitForIdle()}
     private fun snap(name:String){
-        app.waitForIdle();SystemClock.sleep(220)
+        if(name.endsWith("layouts")){
+            app.onNodeWithTag("screen_layouts").assertIsDisplayed()
+            app.mainClock.advanceTimeBy(1000)
+            app.waitUntil(5000){app.onAllNodesWithTag("screen_dash").fetchSemanticsNodes().isEmpty()}
+            app.onNodeWithTag("pick_RACE").assertIsDisplayed()
+        }
+        app.waitForIdle();SystemClock.sleep(350)
         val ins=InstrumentationRegistry.getInstrumentation()
         val bitmap=ins.uiAutomation.takeScreenshot()
         val dir=File(ins.targetContext.filesDir,"review").apply{mkdirs()}
