@@ -1,13 +1,17 @@
-# BMW Digital Cockpit v0.2 — Visual Demo
+# BMW Digital Cockpit v0.3
 
-Projeto Android com interface WebView offline, em tela horizontal, visual M Performance e Race Dashboard, telemetria simulada, temas e seleção persistente de indicadores.
+Demonstração offline para multimídias Android em orientação horizontal. Os nove painéis usam recortes sem recompressão com perdas da referência fornecida. O app preserva a proporção de cada tela com margens nas resoluções diferentes. A nitidez da arte é limitada à imagem de origem.
 
-**IMPORTANTE:** sem integração OBD2/Bluetooth, sem dados reais, sem leitura de falhas. Os números são demonstrativos e não devem ser usados para condução.
+## Navegação
 
-## Compilação no GitHub
+- **Painel** abre o layout selecionado. Toque novamente em Painel, ou nos mostradores, para abrir o seletor de layouts. As setas laterais trocam de painel.
+- **Telemetria** abre o gráfico. O menu lateral dá acesso às medições e ao diagnóstico demonstrativos.
+- **Personalizar** abre o editor. Selecione um sensor, arraste o instrumento, ajuste o tamanho e salve. Toque novamente em Personalizar para acessar Temas e Skins.
+- **Configurações** abre as preferências. Exportar/Importar permite copiar e restaurar as preferências em JSON.
+- **Voltar** retorna à tela anterior. No início, dois toques seguidos em Voltar encerram o app.
 
-Coloque **o conteúdo desta pasta na raiz** de um repositório GitHub (main). Em Actions > Build APK > Run workflow. O arquivo APK estará em Artifacts ao final da execução. O workflow usa Gradle 8.10.2 sem exigir gradlew.
+O estado Vgate, os dados do carro, os códigos de falha e os tempos são exemplos visuais. O app não abre uma conexão Bluetooth e não envia comandos à ECU. Se o componente WebView do Android estiver indisponível, o modo de visualização local permite percorrer as nove telas tocando na imagem.
 
-## Visualização sem instalar
+## Compilar e visualizar
 
-Abra `app/src/main/assets/index.html` em um navegador para pré-visualizar a interface. O APK carrega esse mesmo HTML localmente.
+O workflow **Build APK** usa Java 17 e Gradle 8.10.2 para gerar o APK de depuração. O ZIP em **Artifacts** contém o APK. Para abrir a interface no computador, abra `app/src/main/assets/index.html` com os arquivos adjacentes.
