@@ -59,7 +59,9 @@
   function fit(){
     var dim=pages[route];scale=Math.min(window.innerWidth/dim[0],window.innerHeight/dim[1]);
     stage.style.width=px(dim[0]);stage.style.height=px(dim[1]);
-    var t='scale('+scale+') translate(-50%,-50%)';stage.style.transform=t;stage.style.webkitTransform=t;
+    stage.style.left=px(Math.floor((window.innerWidth-dim[0]*scale)/2));
+    stage.style.top=px(Math.floor((window.innerHeight-dim[1]*scale)/2));
+    var t='scale('+scale+')';stage.style.transform=t;stage.style.webkitTransform=t;
   }
   function dash(){return p.layout===1?'race':'performance';}
   function enter(id,remember){

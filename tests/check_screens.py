@@ -18,7 +18,11 @@ with sync_playwright() as s:
    page.wait_for_function("document.getElementById('art').complete && document.getElementById('art').naturalWidth > 0")
    screenshot=Image.open(io.BytesIO(page.screenshot())).convert('RGB')
    diff=ImageChops.difference(reference.convert('RGB'),screenshot)
-   assert not diff.getbbox(), (scene,diff.getbbox())
+   if diff.getbbox():
+    print('Viewport, stage and art:', page.evaluate("([innerWidth,innerHeight,devicePixelRatio,document.getElementById('stage').getBoundingClientRect().toJSON(),document.getElementById('art').getBoundingClientRect().toJSON()])"))
+    print('Samples:', [(pos,reference.getpixel(pos),screenshot.getpixel(pos)) for pos in [(0,0),(5,5),(81,81),(220,90),(492,200)]])
+    screenshot.save('screen-mismatch.png')
+    raise AssertionError((scene,diff.getbbox(),diff.getextrema()))
  print('9 original panels match browser renders pixel for pixel at source resolution')
  page.set_viewport_size({'width':1280,'height':480})
  page.goto(url+'#performance');page.reload()
