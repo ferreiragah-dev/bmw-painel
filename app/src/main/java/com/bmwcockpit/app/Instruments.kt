@@ -108,6 +108,7 @@ private fun DrawScope.stripes(x:Float,y:Float,k:Float){
                 if(big){val pos=pt(cx,cy,r-32,a);val num=if(s==Sensor.RPM)(i/5).toString() else if(s.max<10)"%.1f".format(java.util.Locale.US,s.max*i/(major*5)) else (s.max*i/(major*5)).roundToInt().toString()
                     letter(num,pos.x,pos.y+5,if(s==Sensor.RPM)18f else 14f)}
             }
+            arc(cx,cy,r-20,start,sweep*ratio,p.accent.copy(alpha=.34f),1.35f)
             val a=start+sweep*ratio;val tail=pt(cx,cy,51f,a);val tip=pt(cx,cy,r-4,a)
             drawLine(mark.copy(alpha=.22f),tail,tip,8f);drawLine(mark,tail,tip,3.7f);drawLine(white.copy(alpha=.66f),pt(cx,cy,r-17,a),tip,1.4f)
             if(s==Sensor.SPEED)stripes(cx-15,cy-37,1.1f)
@@ -148,7 +149,7 @@ fun sensorColor(s:Sensor)=when(s){Sensor.BOOST->red;Sensor.OIL->Color(0xffff982e
 @Composable fun Tile(s:Sensor,f:Frame,mod:Modifier=Modifier,onClick:(()->Unit)?=null){
     val r=f[s];val fraction by animateFloatAsState(((r.value?:0.0)/s.max).toFloat().coerceIn(0f,1f),label="escala")
     Column(mod.plate().then(if(onClick!=null)Modifier.clickable{onClick()} else Modifier).padding(horizontal=8.dp,vertical=5.dp),verticalArrangement=Arrangement.SpaceEvenly){
-        Row(verticalAlignment=Alignment.CenterVertically){Icon(sensorIcon(s),null,Modifier.size(14.dp),muted);Spacer(Modifier.width(4.dp));Txt(s.short,11,muted)}
+        Row(verticalAlignment=Alignment.CenterVertically){Icon(sensorIcon(s),null,Modifier.size(14.dp),muted);Spacer(Modifier.width(4.dp));Txt(s.short + if(r.source==Source.ESTIMATE)" ≈" else "",11,muted)}
         Row(verticalAlignment=Alignment.Bottom){Txt(s.format(r.value),21,LocalPalette.current.digits,true,true);Spacer(Modifier.width(3.dp));Txt(s.unit,11,muted)}
         Canvas(Modifier.fillMaxWidth().height(3.dp)){drawLine(edge,Offset.Zero,Offset(size.width,0f),size.height*2);drawLine(sensorColor(s),Offset.Zero,Offset(size.width*fraction,0f),size.height*2)}
     }

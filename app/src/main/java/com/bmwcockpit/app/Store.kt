@@ -50,18 +50,18 @@ class Prefs(private val context:Context){
 class Sessions(ctx:Context){
     private val dir=File(ctx.filesDir,"sessions").apply{mkdirs()}
     private var writer:java.io.BufferedWriter?=null
-    fun list()=dir.listFiles().orEmpty().filter{it.extension=="csv"}.sortedByDescending{it.name}.map{
+    @Synchronized fun list()=dir.listFiles().orEmpty().filter{it.extension=="csv"}.sortedByDescending{it.name}.map{
         Session(it.name,it.nameWithoutExtension.toLongOrNull()?:0,it.useLines{lines->(lines.count()-1).coerceAtLeast(0)})}
-    fun start(now:Long){
+    @Synchronized fun start(now:Long){
         stop()
         writer=File(dir,"$now.csv").bufferedWriter().also{w->
             w.write("timestamp_ms;mode;"+Sensor.values().joinToString(";"){it.name+"_"+it.unit+";"+it.name+"_source"}+"\n")
         }
     }
-    fun append(f:Frame,demo:Boolean){writer?.apply{
+    @Synchronized fun append(f:Frame,demo:Boolean){writer?.apply{
         write(f.time.toString()+";"+(if(demo)"DEMO" else "OBD2")+";"+Sensor.values().joinToString(";"){s->
             val r=f[s];(r.value?.toString()?:"")+";"+r.source.name}+"\n");flush()
     }}
-    fun stop(){writer?.close();writer=null}
+    @Synchronized fun stop(){writer?.close();writer=null}
     fun export(name:String,out:java.io.OutputStream){require(name.matches(Regex("[0-9]+\\.csv")));File(dir,name).inputStream().use{it.copyTo(out)}}
 }

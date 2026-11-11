@@ -11,6 +11,7 @@ class ObdTest {
         assertNull(Obd.frame(mapOf(11 to listOf(180)),1)[Sensor.BOOST].value)
     }
     @Test fun supportMask(){assertEquals(setOf(1,12,32),Obd.supported(0,listOf(65,0,128,16,0,1)))}
+    @Test fun extendedCanHeader(){assertEquals(listOf(65,13,96),Obd.replies("18 DA F1 10 03 41 0D 60")["18DAF110"])}
     @Test fun ecuIsolation(){
         val r=Obd.replies("7E8 04 41 0C 41 A0\n7E9 03 41 0D 60")
         assertEquals(listOf(65,12,65,160),r["7E8"]);assertEquals(listOf(65,13,96),r["7E9"])

@@ -11,7 +11,9 @@ object Obd {
         data class Assembly(val bytes:MutableList<Int>,val length:Int,var next:Int=1)
         val pending=mutableMapOf<String,Assembly>()
         for(line in raw.uppercase().lines()){
-            val tokens=line.trim().split(Regex("\\s+"))
+            val words=line.trim().split(Regex("\\s+"))
+            val tokens=if(words.size>=6 && words.take(4).all { it.matches(Regex("[0-9A-F]{2}")) })
+                listOf(words.take(4).joinToString(""))+words.drop(4) else words
             val id=tokens.first()
             if(!id.matches(Regex("[0-9A-F]{3}|[0-9A-F]{8}")))continue
             val bytes=tokens.drop(1).mapNotNull { if(it.matches(Regex("[0-9A-F]{2}")))it.toInt(16) else null }
@@ -25,6 +27,7 @@ object Obd {
                         a.next=(a.next+1)%16;a.bytes.addAll(bytes.drop(1))
                         if(a.bytes.size>=a.length){complete[id]=a.bytes.take(a.length);pending.remove(id)}
                     }
+                    Unit
                 }
             }
         }

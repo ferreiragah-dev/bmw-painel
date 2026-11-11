@@ -67,10 +67,28 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 }
 @Composable fun RaceCard(s:Sensor,f:Frame,mod:Modifier=Modifier){
     val p=LocalPalette.current;val hot=(s==Sensor.OIL && (f[s].value?:0.0)>130)||(s==Sensor.WATER && (f[s].value?:0.0)>110)
-    Row(mod.plate().padding(6.dp),verticalAlignment=Alignment.CenterVertically){
-        Box(Modifier.width(3.dp).fillMaxHeight(.8f).background(if(hot)Color.Yellow else p.needle))
-        Spacer(Modifier.width(7.dp));Icon(sensorIcon(s),null,Modifier.size(22.dp),if(hot)Color.Yellow else muted)
-        Spacer(Modifier.width(8.dp));Column{Txt(if(hot)s.short+"  ↑" else s.short,12,if(hot)Color.Yellow else muted);Row(verticalAlignment=Alignment.Bottom){Txt(s.format(f[s].value),24,p.digits,true,true);Txt(" "+s.unit,12,muted)}}
+    val right=s in listOf(Sensor.POWER,Sensor.TORQUE,Sensor.VOLTS,Sensor.IAT)
+    val trim=if(hot)Color(0xffffcb42) else p.needle
+    Box(mod){
+        Canvas(Modifier.matchParentSize()){
+            val w=size.width;val h=size.height;val cut=minOf(w*.09f,h*.31f)
+            val shape=Path().apply{
+                if(right){moveTo(cut,1f);lineTo(w-1,1f);lineTo(w-1,h-1);lineTo(cut,h-1);lineTo(1f,h/2)}
+                else {moveTo(1f,1f);lineTo(w-cut,1f);lineTo(w-1,h/2);lineTo(w-cut,h-1);lineTo(1f,h-1)}
+                close()
+            }
+            val colors=listOf(panel,Color(0xff090e15),trim.copy(alpha=.30f))
+            drawPath(shape,Brush.horizontalGradient(if(right)colors.reversed() else colors))
+            drawPath(shape,edge,style=Stroke(1.dp.toPx()))
+            val near=if(right)cut else w-cut;val tip=if(right)1f else w-1
+            drawLine(trim.copy(alpha=.82f),Offset(near,1f),Offset(tip,h/2),1.5.dp.toPx())
+            drawLine(trim.copy(alpha=.82f),Offset(tip,h/2),Offset(near,h-1),1.5.dp.toPx())
+        }
+        Row(Modifier.fillMaxSize().padding(horizontal=19.dp),verticalAlignment=Alignment.CenterVertically){
+            Icon(sensorIcon(s),null,Modifier.size(22.dp),if(hot)Color.Yellow else muted)
+            Spacer(Modifier.width(9.dp));Column{Txt(if(hot)s.short+"  ↑" else s.short,12,if(hot)Color.Yellow else muted)
+                Row(verticalAlignment=Alignment.Bottom){Txt(s.format(f[s].value),25,p.digits,true,true);Txt(" "+s.unit,12,muted)}}
+        }
     }
 }
 @Composable fun Race(f:Frame,demo:Boolean){

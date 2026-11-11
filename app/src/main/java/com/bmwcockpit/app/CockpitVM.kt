@@ -47,8 +47,8 @@ class CockpitVM(app:Application):AndroidViewModel(app){
         viewModelScope.launch(Dispatchers.IO){for(task in disk)runCatching{task()}.onFailure{notice.value="Armazenamento: "+it.message;recording.value=false}}
         viewModelScope.launch{for(o in saves)runCatching{prefs.save(o)}.onFailure{notice.value="Preferências não salvas"}}
         viewModelScope.launch{
-            val o=prefs.get();options.value=o
-            logs.value=prefs.history();disk.trySend{files.value=sessions.list()}
+            val o=try{prefs.get()}catch(e:IOException){notice.value="Falha ao carregar preferências";Options()};options.value=o
+            logs.value=try{prefs.history()}catch(e:IOException){emptyList()};disk.trySend{files.value=sessions.list()}
             if(!o.demo && o.address.isNotBlank() && o.reconnect)target=Device("Adaptador salvo",o.address,o.ble)
             ready.value=true;restart()
         }
