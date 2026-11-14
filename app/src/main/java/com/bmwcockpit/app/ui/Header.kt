@@ -144,7 +144,7 @@ private fun TabItem(t: TopTab, selected: Boolean, compact: Boolean, height: Dp, 
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 8.dp)) {
             Icon(t.icon, t.label, tint = if (selected) Color.White else p.textDim, modifier = Modifier.size((height.value * 0.36f).coerceIn(18f, 26f).dp))
-            if (!compact || height > 50.dp) {
+            if (!compact) {
                 Text(t.label, color = if (selected) Color.White else p.textDim, fontSize = (height.value * 0.19f).coerceIn(9f, 13f).sp, maxLines = 1)
             }
         }

@@ -73,12 +73,12 @@ class ScreenshotTour {
 
     private fun text(tag: String): String = obj(tag).let { o -> o.text ?: o.children.joinToString("") { it.text ?: "" } }
 
-    /** Opens Multitelas. The picker's arrow buttons are always visible, unlike a given (possibly scrolled) card. */
+    /** Opens Multitelas through Personalizar → Multitelas (a single, deterministic navigation). */
     private fun goLayouts() {
         if (device.findObject(By.res("layouts_prev")) != null) return
-        click("tab_PAINEL", 1_000)
-        if (device.wait(Until.hasObject(By.res("layouts_prev")), 3_000) != true) click("tab_PAINEL", 1_000)
-        obj("layouts_prev", 10_000)
+        click("tab_PERSONALIZAR", 1_000)
+        click("custom_LAYOUTS", 1_500)
+        obj("layouts_prev", 20_000) // four live miniatures render slowly on the CI software GPU
     }
 
     private val dashTags = mapOf("M_PERFORMANCE" to "dash_m_performance", "RACE" to "dash_race", "GT" to "dash_gt", "MINIMAL" to "dash_minimal", "CUSTOM" to "dash_custom")
