@@ -58,11 +58,13 @@ class ScreenshotTour {
     private fun text(tag: String): String = obj(tag).let { o -> o.text ?: o.children.joinToString("") { it.text ?: "" } }
 
     private fun goLayouts() {
+        if (device.findObject(By.res("layout_M_PERFORMANCE")) != null) return
         click("tab_PAINEL")
-        if (device.findObject(By.res("dash_m_performance")) != null || device.findObject(By.res("dash_race")) != null ||
-            device.findObject(By.res("dash_gt")) != null || device.findObject(By.res("dash_minimal")) != null || device.findObject(By.res("dash_custom")) != null
-        ) click("tab_PAINEL") // second tap on Painel opens Multitelas
-        obj("layout_M_PERFORMANCE")
+        // Wait for the dashboard to be on screen; a second tap on Painel then opens Multitelas.
+        device.wait(Until.hasObject(By.res(java.util.regex.Pattern.compile("dash_.*"))), 10_000)
+        Thread.sleep(500)
+        click("tab_PAINEL", 1_000)
+        obj("layout_M_PERFORMANCE", 10_000)
     }
 
     private fun useLayout(id: String) {

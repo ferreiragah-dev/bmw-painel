@@ -7,6 +7,9 @@ TEST_APK=app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 OUT=review/ci
 PKG=com.bmwcockpit.app
 mkdir -p "$OUT"
+# Always collect the screenshots taken so far, even if a tour fails.
+collect() { adb shell wm size reset || true; adb shell wm density reset || true; adb pull /sdcard/Android/data/$PKG/files/review "$OUT/" || true; ls -la "$OUT" || true; }
+trap collect EXIT
 adb install -r "$APK"
 adb install -r "$TEST_APK"
 adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS || true
@@ -32,7 +35,3 @@ run hu1280x480 1280x480 160 false 1
 run ultrawide1920x720 1920x720 160 false 1
 run portrait 1080x2400 420 false 0
 
-adb shell wm size reset
-adb shell wm density reset
-adb pull /sdcard/Android/data/$PKG/files/review "$OUT/" || true
-ls -la "$OUT"
