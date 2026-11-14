@@ -39,27 +39,29 @@ class ScreenshotTour {
         device.pressHome()
         val intent = inst.targetContext.packageManager.getLaunchIntentForPackage(pkg)!!.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
         inst.targetContext.startActivity(intent)
-        assertNotNull("app did not start", device.wait(Until.hasObject(By.pkg(pkg).depth(0)), 15_000))
-        device.wait(Until.hasObject(By.res("tab_PAINEL")), 15_000)
+        assertNotNull("app did not start", device.wait(Until.hasObject(By.pkg(pkg).depth(0)), 60_000))
+        assertTrue("header not shown", device.wait(Until.hasObject(By.res("tab_PAINEL")), 60_000) == true)
+        Thread.sleep(2_000) // first frames on a cold emulator
     }
 
-    private fun obj(tag: String, timeout: Long = 6_000): UiObject2 =
+    private fun obj(tag: String, timeout: Long = 15_000): UiObject2 =
         device.wait(Until.findObject(By.res(tag)), timeout) ?: throw AssertionError("element '$tag' not found")
 
     /**
-     * Clicks through a UiSelector, which re-resolves the node on every attempt: live instruments recompose
-     * many times per second, so a cached UiObject2 often goes stale.
+     * Taps the centre of the element. Live instruments recompose many times per second, so the node is
+     * re-found and its bounds re-read on every attempt; the tap itself is a plain coordinate tap.
      */
     private fun click(tag: String, settle: Long = 700) {
-        obj(tag) // wait until present
-        val sel = androidx.test.uiautomator.UiSelector().resourceId(tag)
-        repeat(6) {
+        var last: Throwable? = null
+        repeat(8) {
             try {
-                if (device.findObject(sel).click()) { Thread.sleep(settle); return }
-            } catch (_: androidx.test.uiautomator.UiObjectNotFoundException) { }
-            Thread.sleep(250)
+                val c = obj(tag).visibleCenter
+                device.click(c.x, c.y)
+                Thread.sleep(settle)
+                return
+            } catch (e: androidx.test.uiautomator.StaleObjectException) { last = e; Thread.sleep(200) }
         }
-        throw AssertionError("could not click '$tag'")
+        throw AssertionError("could not click '$tag'", last)
     }
 
     private fun shot(name: String) {
