@@ -160,6 +160,8 @@ fun LineChart(frame: ChartFrame, units: Units, palette: CockpitPalette, modifier
         drawLine(palette.borderBright, Offset(leftPad, topPad + plotH), Offset(leftPad + plotW, topPad + plotH), 1.5f)
 
         // Series
+        val tags = ArrayList<Triple<Color, Float, String>>()
+        var tagX = leftPad
         for (s in frame.series) {
             if (s.points.isEmpty()) continue
             val color = chartColor(s.sensor)
@@ -180,17 +182,25 @@ fun LineChart(frame: ChartFrame, units: Units, palette: CockpitPalette, modifier
             }
             drawPath(path, color.copy(alpha = 0.25f), style = Stroke(7f, cap = StrokeCap.Round, join = StrokeJoin.Round))
             drawPath(path, color, style = Stroke(3f, cap = StrokeCap.Round, join = StrokeJoin.Round))
-            // End tag
             val last = s.points.last()
-            val ty = yOf(last.v)
-            val tagText = String.format(PT, "%.${decimals(s.sensor, units)}f", convert(s.sensor, last.v, units))
-            paint.textAlign = Paint.Align.LEFT
-            val tw = paint.measureText(tagText) + textH * 0.8f
-            val tx = (xOf(last.t) + 6f).coerceAtMost(size.width - tw - 2f)
-            drawRoundRect(color, Offset(tx, ty - textH * 0.75f), Size(tw, textH * 1.4f), CornerRadius(textH * 0.3f))
+            tags += Triple(color, yOf(last.v), String.format(PT, "%.${decimals(s.sensor, units)}f", convert(s.sensor, last.v, units)))
+            tagX = maxOf(tagX, xOf(last.t))
+        }
+        // End-of-series value tags, pushed apart vertically so none hides another.
+        val tagH = textH * 1.4f
+        val placed = tags.sortedBy { it.second }.toMutableList()
+        val ys = placed.map { it.second }.toMutableList()
+        for (k in 1 until ys.size) if (ys[k] - ys[k - 1] < tagH + 2f) ys[k] = ys[k - 1] + tagH + 2f
+        val overflow = (ys.lastOrNull() ?: 0f) + tagH / 2 - (topPad + plotH + textH)
+        if (overflow > 0) for (k in ys.indices) ys[k] -= overflow
+        paint.textAlign = Paint.Align.LEFT
+        placed.forEachIndexed { k, (color, _, text) ->
+            val tw = paint.measureText(text) + textH * 0.8f
+            val tx = (tagX + 6f).coerceAtMost(size.width - tw - 2f)
+            val ty = ys[k]
+            drawRoundRect(color, Offset(tx, ty - tagH / 2), Size(tw, tagH), CornerRadius(textH * 0.3f))
             paint.color = Color.Black.toArgb()
-            drawContext.canvas.nativeCanvas.drawText(tagText, tx + textH * 0.4f, ty + textH * 0.35f, paint)
-            paint.color = palette.textDim.toArgb()
+            drawContext.canvas.nativeCanvas.drawText(text, tx + textH * 0.4f, ty + textH * 0.35f, paint)
         }
     }
 }

@@ -30,9 +30,21 @@ run() { # prefix WxH density full (the display itself is resized: W>H gives a la
   grep -q "OK (" "$OUT/$prefix-instrument.txt"
 }
 
+# Persistence across a real process restart: set layout/theme, force-stop, verify in a new process.
+persistence() {
+  local inst="$PKG.test/androidx.test.runner.AndroidJUnitRunner"
+  adb shell am instrument -w -e class com.bmwcockpit.app.PersistenceCheck#setUp "$inst" | tee "$OUT/persistence-setup.txt"
+  adb shell am force-stop $PKG
+  sleep 2
+  adb shell am instrument -w -e class com.bmwcockpit.app.PersistenceCheck#verify "$inst" | tee "$OUT/persistence-verify.txt"
+  adb pull /sdcard/Android/data/$PKG/files/review "$OUT/" || true
+  grep -q "OK (" "$OUT/persistence-setup.txt" && grep -q "OK (" "$OUT/persistence-verify.txt"
+}
+
 failed=0
 if [ $# -ge 4 ]; then
   run "$1" "$2" "$3" "$4" || failed=1
+  if [ "$4" = "true" ]; then persistence || failed=1; fi
 else
   run hu1280x720 1280x720 160 true || failed=1
   run hu1024x600 1024x600 160 false || failed=1
