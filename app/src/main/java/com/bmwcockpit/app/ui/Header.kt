@@ -75,6 +75,7 @@ fun CockpitHeader(
     status: HeaderStatus,
     height: Dp,
     compact: Boolean,
+    showTitle: Boolean = !compact,
     onTab: (TopTab) -> Unit,
     onConnectionClick: () -> Unit,
     onDemoClick: () -> Unit,
@@ -91,7 +92,7 @@ fun CockpitHeader(
     ) {
         Roundel(height * 0.66f)
         Spacer(Modifier.width(8.dp))
-        if (!compact) {
+        if (showTitle) {
             MStripes(height * 0.24f)
             Spacer(Modifier.width(6.dp))
             Text(

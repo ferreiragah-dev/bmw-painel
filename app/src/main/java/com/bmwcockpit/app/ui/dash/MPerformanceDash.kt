@@ -45,7 +45,11 @@ import com.bmwcockpit.app.ui.theme.LocalPalette
 @Composable
 fun MPerformanceDash(ctx: DashContext, modifier: Modifier = Modifier) {
     BoxWithConstraints(modifier.fillMaxSize().testTag("dash_m_performance")) {
-        if (maxHeight > maxWidth * 1.05f) MPerfPortrait(ctx, maxWidth, maxHeight) else MPerfLandscape(ctx, maxWidth, maxHeight)
+        when {
+            maxHeight > maxWidth * 1.05f -> MPerfPortrait(ctx, maxWidth, maxHeight)
+            maxWidth > maxHeight * 2.25f -> MPerfUltrawide(ctx, maxWidth, maxHeight)
+            else -> MPerfLandscape(ctx, maxWidth, maxHeight)
+        }
     }
 }
 
@@ -194,5 +198,37 @@ private fun MPerfPortrait(ctx: DashContext, w: Dp, h: Dp) {
         CenterBlock(ctx, Modifier.fillMaxWidth().weight(1f), with(density) { (h * 0.10f).toPx() })
         CardsRow(ctx, Modifier.fillMaxWidth().height((h * 0.22f).coerceIn(110.dp, 200.dp)), columns = 3)
         Footer(ctx, Modifier.fillMaxWidth().height(22.dp), with(density) { 10.dp.toPx() })
+    }
+}
+
+/** Ultrawide (≥ 2.25:1, e.g. 1280×480, 1920×720): full-height instruments, cards moved into the centre column. */
+@Composable
+private fun MPerfUltrawide(ctx: DashContext, w: Dp, h: Dp) {
+    val density = LocalDensity.current
+    val footerH = (h * 0.065f).coerceIn(18.dp, 30.dp)
+    val mainH = h - footerH - 6.dp
+    val arrowW = if (ctx.onPrev != null && !ctx.thumbnail) 22.dp else 4.dp
+    val d = minOf(mainH, (w - arrowW * 2) * 0.30f)
+    Column(Modifier.fillMaxSize().padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Box(Modifier.fillMaxWidth().height(mainH)) {
+            WingGlow(Modifier.fillMaxSize())
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+                EdgeArrow(true, if (ctx.thumbnail) null else ctx.onPrev, arrowW)
+                SpeedGauge(ctx, Modifier.size(d))
+                Column(Modifier.weight(1f).fillMaxHeight().padding(horizontal = 8.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(Modifier.fillMaxWidth().weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                        CarFront(Modifier.weight(1.4f).fillMaxHeight())
+                        GearIndicator(
+                            ctx.snap.value(SensorId.GEAR), ctx.settings.profile, with(density) { (mainH * 0.30f).toPx() },
+                            modifier = Modifier.weight(1f), onProfileClick = if (ctx.thumbnail) null else ctx.onProfileTap,
+                        )
+                    }
+                    CardsRow(ctx, Modifier.fillMaxWidth().height(mainH * 0.42f), columns = 3)
+                }
+                TachGauge(ctx, Modifier.size(d))
+                EdgeArrow(false, if (ctx.thumbnail) null else ctx.onNext, arrowW)
+            }
+        }
+        Footer(ctx, Modifier.fillMaxWidth().height(footerH), with(density) { (footerH * 0.5f).toPx() })
     }
 }

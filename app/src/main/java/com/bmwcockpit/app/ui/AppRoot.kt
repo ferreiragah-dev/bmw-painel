@@ -108,7 +108,8 @@ fun AppRoot(vm: MainViewModel = viewModel()) {
     CockpitTheme(palette) {
         val insets = if (settings.immersive) WindowInsets.displayCutout else WindowInsets.safeDrawing
         BoxWithConstraints(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }.background(palette.background).windowInsetsPadding(insets)) {
-            val compact = maxWidth < 760.dp
+            val compact = maxWidth < 640.dp
+            val showTitle = maxWidth >= 1000.dp
             val headerH = (maxHeight * 0.11f).coerceIn(44.dp, 64.dp)
             val status = HeaderStatus(snapshot.source, connection, settings.device?.name, recording)
             Column(Modifier.fillMaxSize()) {
@@ -117,6 +118,7 @@ fun AppRoot(vm: MainViewModel = viewModel()) {
                     status = status,
                     height = headerH,
                     compact = compact,
+                    showTitle = showTitle,
                     onTab = { t ->
                         if (t == TopTab.PAINEL && route == Routes.DASH) nav.go(Routes.LAYOUTS) else nav.go(t.route)
                     },

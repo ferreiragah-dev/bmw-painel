@@ -1,7 +1,23 @@
 package com.bmwcockpit.app.ui.dash
 
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronLeft
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.bmwcockpit.app.ui.theme.LocalPalette
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,8 +69,17 @@ fun DashboardScreen(vm: MainViewModel) {
             is CardSlot.Race -> "r:${if (slot.left) "l" else "r"}:${slot.index}"
         }
     })
-    Box(Modifier.fillMaxSize()) {
-        DashFor(ctx.settings.layout, ctx, Modifier.fillMaxSize())
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val portrait = maxHeight > maxWidth * 1.05f
+        if (portrait) {
+            // Portrait compositions have no room for edge arrows: a compact layout switcher sits on top.
+            Column(Modifier.fillMaxSize()) {
+                PortraitLayoutSwitcher(ctx)
+                DashFor(ctx.settings.layout, ctx.copy(onPrev = null, onNext = null), Modifier.fillMaxWidth().weight(1f))
+            }
+        } else {
+            DashFor(ctx.settings.layout, ctx, Modifier.fillMaxSize())
+        }
     }
     val p = picking
     if (p != null) {
@@ -75,5 +100,23 @@ fun DashboardScreen(vm: MainViewModel) {
             apply = { vm.setRaceSensor(left, i, it) }
         }
         SensorPickerDialog(title, current, SensorId.cardSelectable, ctx.snap, apply, onDismiss = { picking = null })
+    }
+}
+
+@Composable
+private fun PortraitLayoutSwitcher(ctx: DashContext) {
+    val p = LocalPalette.current
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 40.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        IconButton({ ctx.onPrev?.invoke() }, Modifier.testTag("dash_prev")) {
+            Icon(Icons.Filled.ChevronLeft, "Layout anterior", tint = p.text)
+        }
+        Text(ctx.settings.layout.label, color = p.textDim, fontSize = 14.sp)
+        IconButton({ ctx.onNext?.invoke() }, Modifier.testTag("dash_next")) {
+            Icon(Icons.Filled.ChevronRight, "Próximo layout", tint = p.text)
+        }
     }
 }

@@ -173,6 +173,7 @@ class ScreenshotTour {
         widget.click(); Thread.sleep(400)
         val b0 = widget.visibleBounds
         widget.drag(Point(b0.centerX() + 60, b0.centerY() + 40), 600); Thread.sleep(600)
+        click("widget_w3", 500) // make sure it is (still) selected so the resize handle shows
         val resize = obj("resize_w3")
         val rb = resize.visibleBounds
         resize.drag(Point(rb.centerX() + 50, rb.centerY() + 30), 600); Thread.sleep(600)
