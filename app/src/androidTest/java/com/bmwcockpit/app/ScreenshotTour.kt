@@ -59,11 +59,9 @@ class ScreenshotTour {
 
     private fun goLayouts() {
         if (device.findObject(By.res("layout_M_PERFORMANCE")) != null) return
-        click("tab_PAINEL")
-        // Wait for the dashboard to be on screen; a second tap on Painel then opens Multitelas.
-        device.wait(Until.hasObject(By.res(java.util.regex.Pattern.compile("dash_.*"))), 10_000)
-        Thread.sleep(500)
+        // From the dashboard one tap on Painel opens Multitelas; from other tabs the first tap returns to the dashboard.
         click("tab_PAINEL", 1_000)
+        if (device.wait(Until.hasObject(By.res("layout_M_PERFORMANCE")), 2_500) != true) click("tab_PAINEL", 1_000)
         obj("layout_M_PERFORMANCE", 10_000)
     }
 

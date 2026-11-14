@@ -14,13 +14,11 @@ adb install -r "$APK"
 adb install -r "$TEST_APK"
 adb shell pm grant $PKG android.permission.POST_NOTIFICATIONS || true
 
-run() { # prefix size density full orientation(0=landscape user rotation 1)
-  local prefix=$1 size=$2 dens=$3 full=$4 rot=$5
+run() { # prefix WxH density full  (the display itself is resized: W>H gives a landscape head unit)
+  local prefix=$1 size=$2 dens=$3 full=$4
   adb shell settings put system accelerometer_rotation 0
-  adb shell settings put system user_rotation "$rot"
-  if [ "$rot" = "1" ]; then # natural orientation is portrait: swap for landscape head-unit sizes
-    local w=${size%x*} h=${size#*x}; adb shell wm size "${h}x${w}"
-  else adb shell wm size "$size"; fi
+  adb shell settings put system user_rotation 0
+  adb shell wm size "$size"
   adb shell wm density "$dens"
   sleep 2
   adb shell am instrument -w -e class com.bmwcockpit.app.ScreenshotTour -e prefix "$prefix" -e full "$full" \
@@ -28,10 +26,11 @@ run() { # prefix size density full orientation(0=landscape user rotation 1)
   grep -q "OK (" "$OUT/$prefix-instrument.txt"
 }
 
-run hu1280x720 1280x720 160 true 1
-run hu1024x600 1024x600 160 false 1
-run hu800x480 800x480 160 false 1
-run hu1280x480 1280x480 160 false 1
-run ultrawide1920x720 1920x720 160 false 1
-run portrait 1080x2400 420 false 0
+run hu1280x720 1280x720 160 true || failed=1
+run hu1024x600 1024x600 160 false || failed=1
+run hu800x480 800x480 160 false || failed=1
+run hu1280x480 1280x480 160 false || failed=1
+run ultrawide1920x720 1920x720 160 false || failed=1
+run portrait 1080x2400 420 false || failed=1
 
+exit ${failed:-0}
