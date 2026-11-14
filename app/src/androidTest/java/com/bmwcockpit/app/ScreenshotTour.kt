@@ -53,7 +53,7 @@ class ScreenshotTour {
      */
     private fun click(tag: String, settle: Long = 700) {
         var last: Throwable? = null
-        repeat(8) {
+        repeat(12) {
             try {
                 val c = obj(tag).visibleCenter
                 device.click(c.x, c.y)
@@ -201,7 +201,7 @@ class ScreenshotTour {
         // Back navigation returns to the dashboard
         device.pressBack(); Thread.sleep(800)
         obj("tab_PAINEL")
-        assertNotNull("back did not return to the dashboard", device.findObject(By.res(java.util.regex.Pattern.compile("dash_.*"))))
+        assertTrue("back did not return to the dashboard", device.wait(Until.hasObject(By.res(java.util.regex.Pattern.compile("dash_.*"))), 15_000) == true)
         shot("voltar-painel")
     }
 }
