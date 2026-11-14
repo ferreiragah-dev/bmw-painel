@@ -94,6 +94,22 @@ jobs:
       - name: Build APKs
         run: ./gradlew --no-daemon assembleDebug assembleDebugAndroidTest
       - name: Run screenshot tour on emulator (${{ matrix.name }})
+        id: tour1
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: false
+          ram-size: 4096M
+          heap-size: 512M
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
+          script: bash tools/capture-review.sh ${{ matrix.name }} ${{ matrix.size }} ${{ matrix.density }} ${{ matrix.full }}
+      # The CI emulator's software GPU occasionally crashes; retry once on a fresh emulator.
+      - name: Retry screenshot tour (${{ matrix.name }})
+        if: steps.tour1.outcome == 'failure'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34

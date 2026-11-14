@@ -81,12 +81,29 @@ class ScreenshotTour {
         obj("layouts_prev", 10_000)
     }
 
+    private val dashTags = mapOf("M_PERFORMANCE" to "dash_m_performance", "RACE" to "dash_race", "GT" to "dash_gt", "MINIMAL" to "dash_minimal", "CUSTOM" to "dash_custom")
+
+    /** Switches layout with the dashboard's own edge arrow (cycles through the 5 layouts). */
     private fun useLayout(id: String) {
+        val target = dashTags.getValue(id)
+        if (device.findObject(By.res("tab_PAINEL")) != null && device.findObject(By.res(java.util.regex.Pattern.compile("dash_.*"))) == null) {
+            click("tab_PAINEL", 1_200)
+        }
+        if (device.findObject(By.res("layouts_prev")) != null) { device.pressBack(); Thread.sleep(800) }
+        repeat(6) {
+            if (device.wait(Until.hasObject(By.res(target)), 1_500) == true) return
+            if (device.findObject(By.res("dash_next")) == null) return pickFromMultitelas(id) // portrait layouts have no edge arrows
+            click("dash_next", 900)
+        }
+        obj(target)
+    }
+
+    private fun pickFromMultitelas(id: String) {
         goLayouts()
-        // The row may be scrolled either way: try going back first, then forward.
-        repeat(5) { if (device.findObject(By.res("layout_$id")) == null && device.findObject(By.res("layouts_prev")) != null) click("layouts_prev", 500) }
-        repeat(5) { if (device.findObject(By.res("layout_$id")) == null && device.findObject(By.res("layouts_next")) != null) click("layouts_next", 500) }
+        repeat(5) { if (device.findObject(By.res("layout_$id")) == null) click("layouts_prev", 600) }
+        repeat(5) { if (device.findObject(By.res("layout_$id")) == null) click("layouts_next", 600) }
         click("layout_$id", 1_200)
+        obj(dashTags.getValue(id))
     }
 
     private fun openThemes() {
@@ -119,6 +136,7 @@ class ScreenshotTour {
         if (!full) { useLayout("M_PERFORMANCE"); return }
 
         goLayouts(); shot("multitelas")
+        device.pressBack(); Thread.sleep(800)
         useLayout("M_PERFORMANCE")
 
         // Configurable card: open the sensor picker and change card 1 to Throttle, then back to Boost.
