@@ -108,8 +108,7 @@ class ScreenshotTour {
 
     private fun openThemes() {
         click("tab_PERSONALIZAR")
-        val t = device.wait(Until.findObject(By.text("Temas e skins")), 10_000) ?: throw AssertionError("Temas tab not found")
-        device.click(t.visibleCenter.x, t.visibleCenter.y)
+        click("custom_THEMES")
         obj("theme_M_PERFORMANCE")
     }
 

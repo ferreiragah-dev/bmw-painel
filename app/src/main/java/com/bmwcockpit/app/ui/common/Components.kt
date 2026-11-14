@@ -142,7 +142,7 @@ fun ToggleRow(title: String, checked: Boolean, onChange: (Boolean) -> Unit, modi
 
 /** Segmented control. */
 @Composable
-fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit, modifier: Modifier = Modifier, icon: ((T) -> ImageVector?)? = null) {
+fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, onSelect: (T) -> Unit, modifier: Modifier = Modifier, icon: ((T) -> ImageVector?)? = null, tag: ((T) -> String)? = null) {
     val p = LocalPalette.current
     val shape = RoundedCornerShape(6.dp)
     Row(modifier.clip(shape).border(1.dp, p.borderBright, shape).background(p.surface)) {
@@ -154,6 +154,7 @@ fun <T> Segmented(options: List<T>, selected: T, label: (T) -> String, onSelect:
                     .background(if (sel) Brush.verticalGradient(listOf(p.accent.copy(alpha = 0.55f), p.accent.copy(alpha = 0.25f))) else Brush.verticalGradient(listOf(Color.Transparent, Color.Transparent)))
                     .border(if (sel) 1.dp else 0.dp, if (sel) p.accent else Color.Transparent, shape)
                     .clickable { onSelect(o) }
+                    .then(if (tag != null) Modifier.testTag(tag(o)) else Modifier)
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {

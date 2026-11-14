@@ -35,6 +35,7 @@ fun CustomizeTabs(nav: NavHostController, current: String) {
                     CustomTab.THEMES -> Icons.Filled.Palette
                 }
             },
+            tag = { "custom_${it.name}" },
         )
     }
 }
