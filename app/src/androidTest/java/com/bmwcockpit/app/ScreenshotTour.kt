@@ -73,19 +73,19 @@ class ScreenshotTour {
 
     private fun text(tag: String): String = obj(tag).let { o -> o.text ?: o.children.joinToString("") { it.text ?: "" } }
 
+    /** Opens Multitelas. The picker's arrow buttons are always visible, unlike a given (possibly scrolled) card. */
     private fun goLayouts() {
-        if (device.findObject(By.res("layout_M_PERFORMANCE")) != null) return
-        // From the dashboard one tap on Painel opens Multitelas; from other tabs the first tap returns to the dashboard.
+        if (device.findObject(By.res("layouts_prev")) != null) return
         click("tab_PAINEL", 1_000)
-        if (device.wait(Until.hasObject(By.res("layout_M_PERFORMANCE")), 2_500) != true) click("tab_PAINEL", 1_000)
-        obj("layout_M_PERFORMANCE", 10_000)
+        if (device.wait(Until.hasObject(By.res("layouts_prev")), 3_000) != true) click("tab_PAINEL", 1_000)
+        obj("layouts_prev", 10_000)
     }
 
     private fun useLayout(id: String) {
         goLayouts()
         // The row may be scrolled either way: try going back first, then forward.
-        repeat(5) { if (device.findObject(By.res("layout_$id")) == null) click("layouts_prev", 400) }
-        repeat(5) { if (device.findObject(By.res("layout_$id")) == null) click("layouts_next", 400) }
+        repeat(5) { if (device.findObject(By.res("layout_$id")) == null && device.findObject(By.res("layouts_prev")) != null) click("layouts_prev", 500) }
+        repeat(5) { if (device.findObject(By.res("layout_$id")) == null && device.findObject(By.res("layouts_next")) != null) click("layouts_next", 500) }
         click("layout_$id", 1_200)
     }
 
@@ -119,7 +119,7 @@ class ScreenshotTour {
         if (!full) { useLayout("M_PERFORMANCE"); return }
 
         goLayouts(); shot("multitelas")
-        click("layout_M_PERFORMANCE", 1_000)
+        useLayout("M_PERFORMANCE")
 
         // Configurable card: open the sensor picker and change card 1 to Throttle, then back to Boost.
         click("card_0"); obj("pick_THROTTLE"); shot("sensor-picker"); click("pick_THROTTLE")
