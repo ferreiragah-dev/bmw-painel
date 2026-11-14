@@ -69,6 +69,16 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: hu1280x720, size: 1280x720, density: 160, full: 'true' }
+          - { name: hu1024x600, size: 1024x600, density: 160, full: 'false' }
+          - { name: hu800x480, size: 800x480, density: 160, full: 'false' }
+          - { name: hu1280x480, size: 1280x480, density: 160, full: 'false' }
+          - { name: ultrawide1920x720, size: 1920x720, density: 160, full: 'false' }
+          - { name: portrait, size: 1080x2400, density: 420, full: 'false' }
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -83,7 +93,7 @@ jobs:
           sudo udevadm trigger --name-match=kvm
       - name: Build APKs
         run: ./gradlew --no-daemon assembleDebug assembleDebugAndroidTest
-      - name: Run screenshot tour on emulator (1280x720, 1024x600, 800x480, 1280x480, portrait)
+      - name: Run screenshot tour on emulator (${{ matrix.name }})
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
@@ -94,9 +104,9 @@ jobs:
           ram-size: 4096M
           heap-size: 512M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none
-          script: bash tools/capture-review.sh
+          script: bash tools/capture-review.sh ${{ matrix.name }} ${{ matrix.size }} ${{ matrix.density }} ${{ matrix.full }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: review-screenshots
+          name: review-screenshots-${{ matrix.name }}
           path: review/ci/

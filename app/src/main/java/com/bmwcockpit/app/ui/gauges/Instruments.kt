@@ -167,14 +167,13 @@ fun DigitalReadout(
                 Icon(sensorIcon(v.sensor), null, tint = color ?: p.textDim, modifier = Modifier.size(with(LocalDensity.current) { (labelPx * 1.2f).toDp() }))
                 Spacer(Modifier.width(4.dp))
                 Text(v.sensor.shortLabel, color = p.textDim, fontSize = pxToSp(labelPx), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                if (limitText != null) Text(limitText + "  ", color = p.textFaint, fontSize = pxToSp(labelPx * 0.8f), maxLines = 1)
                 originBadge(v.origin)?.let { Text(it, color = p.textFaint, fontSize = pxToSp(labelPx * 0.75f)) }
             }
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(v.text, color = if (v.raw == null) p.textFaint else (ac ?: p.text), fontSize = pxToSp(valuePx), fontFamily = CondensedFamily, fontStyle = FontStyle.Italic, maxLines = 1)
                 Spacer(Modifier.width(4.dp))
                 Text(v.unit, color = p.textDim, fontSize = pxToSp(labelPx), modifier = Modifier.padding(bottom = 3.dp))
-                Spacer(Modifier.weight(1f))
-                if (limitText != null) Text(limitText, color = p.textFaint, fontSize = pxToSp(labelPx * 0.8f), maxLines = 1)
             }
             if (showBar) ScaleBar(v.fraction, color ?: sensorColor(v.sensor), Modifier.fillMaxWidth().height(4.dp), alert = alert == AlertLevel.CRITICAL)
         }

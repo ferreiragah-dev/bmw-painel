@@ -56,7 +56,7 @@ import com.bmwcockpit.app.ui.theme.LocalPalette
 // ------------------------------------------------------------------------------------------- GT
 
 @Composable
-private fun SmallGauge(ctx: DashContext, sensor: SensorId, scale: GaugeScale, d: Dp, tag: String) {
+private fun SmallGauge(ctx: DashContext, sensor: SensorId, scale: GaugeScale, d: Dp, tag: String, showGear: Boolean = false) {
     val p = LocalPalette.current
     val u = ctx.settings.units
     val v = ctx.snap.view(sensor, u)
@@ -67,6 +67,10 @@ private fun SmallGauge(ctx: DashContext, sensor: SensorId, scale: GaugeScale, d:
             Text(sensor.shortLabel, color = p.textDim, fontSize = pxToSp(dp * 0.055f), maxLines = 1)
             Text(v.text, color = if (v.raw == null) p.textFaint else if (level == AlertLevel.CRITICAL) p.danger else p.text, fontSize = pxToSp(dp * 0.17f), fontFamily = CondensedFamily, fontStyle = FontStyle.Italic, maxLines = 1)
             Text(v.unit, color = p.textDim, fontSize = pxToSp(dp * 0.055f))
+            if (showGear) {
+                val g = ctx.snap.value(SensorId.GEAR)
+                Text(g?.let { "D${it.toInt()}" } ?: "—", color = if (g == null) p.textFaint else p.accentBright, fontSize = pxToSp(dp * 0.07f), fontFamily = CondensedFamily, fontStyle = FontStyle.Italic, modifier = Modifier.testTag("gear"))
+            }
         }
     }
 }
@@ -107,10 +111,7 @@ fun GtDash(ctx: DashContext, modifier: Modifier = Modifier) {
             Row(Modifier.fillMaxWidth().height(gaugesH), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceEvenly) {
                 if (!ctx.thumbnail && ctx.onPrev != null) EdgeArrow(true, ctx.onPrev)
                 SmallGauge(ctx, SensorId.BOOST, scaleFor(SensorId.BOOST, ctx), dSide, "gt_boost")
-                Box(contentAlignment = Alignment.BottomCenter) {
-                    SmallGauge(ctx, SensorId.SPEED, scaleFor(SensorId.SPEED, ctx), dCenter, "gt_speed")
-                    GearIndicator(ctx.snap.value(SensorId.GEAR), ctx.settings.profile, with(LocalDensity.current) { (dCenter * 0.16f).toPx() }, showProfile = false, modifier = Modifier.offset(y = dCenter * 0.02f))
-                }
+                SmallGauge(ctx, SensorId.SPEED, scaleFor(SensorId.SPEED, ctx), dCenter, "gt_speed", showGear = true)
                 SmallGauge(ctx, SensorId.OIL_TEMP, scaleFor(SensorId.OIL_TEMP, ctx), dSide, "gt_oil")
                 if (!ctx.thumbnail && ctx.onNext != null) EdgeArrow(false, ctx.onNext)
             }

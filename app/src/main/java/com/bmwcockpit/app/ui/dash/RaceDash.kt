@@ -168,10 +168,10 @@ private fun RaceTach(ctx: DashContext, d: Dp) {
         description = "Conta-giros ${v.text} rpm",
     ) { dp ->
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(v.text, color = if (v.raw == null) p.textFaint else if (alert) p.danger else p.text, fontSize = pxToSp(dp * 0.16f), fontFamily = CondensedFamily, fontStyle = FontStyle.Italic, maxLines = 1)
-            Text("RPM", color = p.textDim, fontSize = pxToSp(dp * 0.05f))
-            Spacer(Modifier.height(with(LocalDensity.current) { (dp * 0.05f).toDp() }))
-            GearIndicator(ctx.snap.value(SensorId.GEAR), ctx.settings.profile, dp * 0.2f, onProfileClick = if (ctx.thumbnail) null else ctx.onProfileTap)
+            Text(v.text, color = if (v.raw == null) p.textFaint else if (alert) p.danger else p.text, fontSize = pxToSp(dp * 0.115f), fontFamily = CondensedFamily, fontStyle = FontStyle.Italic, maxLines = 1)
+            Text("RPM", color = p.textDim, fontSize = pxToSp(dp * 0.04f))
+            Spacer(Modifier.height(with(LocalDensity.current) { (dp * 0.01f).toDp() }))
+            GearIndicator(ctx.snap.value(SensorId.GEAR), ctx.settings.profile, dp * 0.15f, onProfileClick = if (ctx.thumbnail) null else ctx.onProfileTap)
         }
     }
 }
