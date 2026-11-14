@@ -83,9 +83,17 @@ class ScreenshotTour {
 
     private fun useLayout(id: String) {
         goLayouts()
-        // scroll the row until the card is visible
-        repeat(4) { if (device.findObject(By.res("layout_$id")) == null) click("layouts_next", 500) }
+        // The row may be scrolled either way: try going back first, then forward.
+        repeat(5) { if (device.findObject(By.res("layout_$id")) == null) click("layouts_prev", 400) }
+        repeat(5) { if (device.findObject(By.res("layout_$id")) == null) click("layouts_next", 400) }
         click("layout_$id", 1_200)
+    }
+
+    private fun openThemes() {
+        click("tab_PERSONALIZAR")
+        val t = device.wait(Until.findObject(By.text("Temas e skins")), 10_000) ?: throw AssertionError("Temas tab not found")
+        device.click(t.visibleCenter.x, t.visibleCenter.y)
+        obj("theme_M_PERFORMANCE")
     }
 
     @Test fun tour() {
@@ -160,11 +168,10 @@ class ScreenshotTour {
         click("editor_restore")
 
         // Themes
-        click("tab_PERSONALIZAR"); device.findObject(By.text("Temas e skins"))?.click(); Thread.sleep(600)
-        obj("theme_RACE_RED"); shot("temas")
+        openThemes(); shot("temas")
         click("theme_RACE_RED"); click("accent_ff2fd27a")
         click("tab_PAINEL", 1_200); shot("tema-race-red-aplicado")
-        click("tab_PERSONALIZAR"); device.findObject(By.text("Temas e skins"))?.click(); Thread.sleep(500)
+        openThemes()
         click("theme_M_PERFORMANCE"); click("accent_default")
 
         // Settings

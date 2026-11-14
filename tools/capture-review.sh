@@ -20,8 +20,12 @@ run() { # prefix WxH density full (the display itself is resized: W>H gives a la
   adb shell wm size "$size"
   adb shell wm density "$dens"
   sleep 4
+  # The emulator's software GPU can crash; keep pulling screenshots while the tour runs.
+  ( while true; do adb pull /sdcard/Android/data/$PKG/files/review "$OUT/" >/dev/null 2>&1; sleep 5; done ) &
+  local puller=$!
   adb shell am instrument -w -e class com.bmwcockpit.app.ScreenshotTour -e prefix "$prefix" -e full "$full" \
     $PKG.test/androidx.test.runner.AndroidJUnitRunner | tee "$OUT/$prefix-instrument.txt"
+  kill $puller 2>/dev/null || true
   adb pull /sdcard/Android/data/$PKG/files/review "$OUT/" || true
   grep -q "OK (" "$OUT/$prefix-instrument.txt"
 }
