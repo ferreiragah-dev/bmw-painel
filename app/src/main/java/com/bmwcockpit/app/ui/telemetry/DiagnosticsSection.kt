@@ -20,7 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bluetooth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ErrorOutline
-import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
@@ -161,7 +161,7 @@ private fun ResultBlock(title: String, r: DtcResult) {
                 r.partial.forEach { c -> StatusLine(Icons.Filled.Warning, p.warning, "${c.code} – ${c.description ?: "descrição não disponível"}") }
             }
             is DtcResult.NoResponse -> StatusLine(Icons.Filled.ErrorOutline, p.danger, "Sem resposta válida: ${r.reason}. Isto NÃO indica ausência de códigos.")
-            is DtcResult.Unsupported -> StatusLine(Icons.Filled.HelpOutline, p.textFaint, r.reason)
+            is DtcResult.Unsupported -> StatusLine(Icons.AutoMirrored.Filled.HelpOutline, p.textFaint, r.reason)
         }
     }
 }

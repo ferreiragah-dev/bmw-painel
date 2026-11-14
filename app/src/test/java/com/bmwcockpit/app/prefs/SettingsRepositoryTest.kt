@@ -8,7 +8,9 @@ import com.bmwcockpit.app.data.model.SensorId
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
@@ -36,7 +38,8 @@ class SettingsRepositoryTest {
                 customLayout = EditorLayout("Pista", listOf(EditorWidget("a", SensorId.RPM, 0.1f, 0.1f, 0.3f, 0.3f, WidgetStyle.BAR, EditorDefaults.RED))),
             )
         }
-        scope1.cancel()
+        // Fully shut down the first DataStore (only one instance per file may be active), like a process exit.
+        scope1.coroutineContext[Job]!!.cancelAndJoin()
         // "Process restart": a new DataStore on the same file
         val scope2 = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         val s = SettingsRepository(store(file, scope2)).settings.first()
