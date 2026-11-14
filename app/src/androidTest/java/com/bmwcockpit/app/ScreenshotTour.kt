@@ -46,7 +46,14 @@ class ScreenshotTour {
     private fun obj(tag: String, timeout: Long = 6_000): UiObject2 =
         device.wait(Until.findObject(By.res(tag)), timeout) ?: throw AssertionError("element '$tag' not found")
 
-    private fun click(tag: String, settle: Long = 700) { obj(tag).click(); Thread.sleep(settle) }
+    /** Clicks with retry: live instruments recompose constantly, which can make a found node stale. */
+    private fun click(tag: String, settle: Long = 700) {
+        var last: Throwable? = null
+        repeat(4) {
+            try { obj(tag).click(); Thread.sleep(settle); return } catch (e: androidx.test.uiautomator.StaleObjectException) { last = e; Thread.sleep(250) }
+        }
+        throw AssertionError("element '$tag' kept going stale", last)
+    }
 
     private fun shot(name: String) {
         Thread.sleep(400)

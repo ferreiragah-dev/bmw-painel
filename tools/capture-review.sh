@@ -23,6 +23,7 @@ run() { # prefix WxH density full  (the display itself is resized: W>H gives a l
   sleep 2
   adb shell am instrument -w -e class com.bmwcockpit.app.ScreenshotTour -e prefix "$prefix" -e full "$full" \
     $PKG.test/androidx.test.runner.AndroidJUnitRunner | tee "$OUT/$prefix-instrument.txt"
+  adb pull /sdcard/Android/data/$PKG/files/review "$OUT/" || true
   grep -q "OK (" "$OUT/$prefix-instrument.txt"
 }
 
