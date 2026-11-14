@@ -79,7 +79,7 @@ class SessionRecorderTest {
         hub.publish(t, listOf(Reading.of(SensorId.RPM, 900f, 1, DataOrigin.SIMULATED)))
         hub.beginSource(SourceKind.VEHICLE)
         rec.onSourceChanged()
-        waitUntil { !rec.state.value.recording }
+        waitUntil { !rec.state.value.recording && rec.sessions.value.isNotEmpty() }
         assertEquals("Fonte de dados alterada", rec.sessions.value.single().endReason)
         scope.cancel()
     }

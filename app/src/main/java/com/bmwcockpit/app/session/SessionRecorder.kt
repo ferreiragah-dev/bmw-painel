@@ -214,8 +214,8 @@ class SessionRecorder(
         partFile(m.id).renameTo(csvFile(m.id))
         writeMeta(m.copy(endedEpochMs = wallClock(), samples = _state.value.samples, interrupted = interrupted, endReason = reason))
         meta = null
+        refreshList() // list first, so observers never see 'stopped' without the saved session
         _state.value = RecordingState(false, null, 0, 0, "Sessão salva (${_state.value.samples} amostras)")
-        refreshList()
     }
 
     fun delete(id: String) {
